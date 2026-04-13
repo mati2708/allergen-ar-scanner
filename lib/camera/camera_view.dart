@@ -87,6 +87,10 @@ class _CameraViewState extends State<CameraView> {
   }
 
   Future<void> _processCameraImage(CameraImage image) async {
+
+    // 1. ZACZYNAMY MIERZYĆ CZAS NA SAMYM POCZĄTKU
+    final startTime = DateTime.now();
+
     if (_isProcessing || !mounted) return;
     _isProcessing = true;
 
@@ -99,7 +103,7 @@ class _CameraViewState extends State<CameraView> {
 
       List<DetectedWord> newAllergensOnScreen = [];
       
-      // NOWOŚĆ: Koszyki na tę konkretną klatkę obrazu
+      // Koszyki na tę konkretną klatkę obrazu
       Set<String> tempDangerous = {};
       Set<String> tempMedium = {};
       Set<String> tempLight = {};
@@ -128,7 +132,7 @@ class _CameraViewState extends State<CameraView> {
                   DetectedWord(allergen: matchedAllergen, rawBoundingBox: scaledBox)
                 );
 
-                // NOWOŚĆ: Sortowanie do odpowiedniego koszyka na podstawie oceny AI
+                // Sortowanie do odpowiedniego koszyka na podstawie oceny AI
                 String formattedName = matchedAllergen.name.toUpperCase();
                 if (matchedAllergen.severity == AllergenSeverity.dangerous) {
                   tempDangerous.add(formattedName);
@@ -143,7 +147,7 @@ class _CameraViewState extends State<CameraView> {
         }
       }
 
-      // NOWOŚĆ: Zapisujemy koszyki do głównego stanu interfejsu
+      // Zapisujemy koszyki do głównego stanu interfejsu
       setState(() {
         _allergensForAr = newAllergensOnScreen;
         _dangerousAllergens = tempDangerous;
@@ -175,6 +179,16 @@ class _CameraViewState extends State<CameraView> {
     } catch (e) {
       print("Błąd OCR/AR: $e");
     } finally {
+      // 2. KOŃCZYMY POMIAR I WYLICZAMY FPS NA SAMYM KOŃCU
+      final endTime = DateTime.now();
+      final processingTimeMs = endTime.difference(startTime).inMilliseconds;
+      
+      // Zabezpieczenie przed dzieleniem przez zero
+      final currentFPS = processingTimeMs > 0 ? (1000 ~/ processingTimeMs) : 0; 
+
+      // Wyświetlenie wyniku w konsoli do spisania do sprawozdania!
+      print('⏱️ Czas OCR+AI: ${processingTimeMs}ms | Wydajność algorytmu: $currentFPS FPS');
+
       _isProcessing = false;
     }
   }

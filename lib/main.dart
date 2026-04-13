@@ -30,7 +30,7 @@ class AllergenScannerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      // Ukrywamy wstążkę "DEBUG" w rogu
+      showPerformanceOverlay: true,
       debugShowCheckedModeBanner: false, 
       home: const CameraView(),
     );
