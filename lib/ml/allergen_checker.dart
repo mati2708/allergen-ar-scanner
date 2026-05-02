@@ -9,12 +9,35 @@ class AllergenChecker {
   AllergenChecker(this._classifier);
 
   final Map<String, String> _targetWordsMap = {
-    'mleko': 'mleko', 'orzeszki': 'orzeszki', 'orzechy': 'orzeszki',
-    'gluten': 'gluten', 'pszenica': 'gluten', 'soja': 'soja',
-    'jaja': 'jaja', 'jajka': 'jaja',
-    'milk': 'mleko', 'peanuts': 'orzeszki', 'peanut': 'orzeszki',
-    'nuts': 'orzeszki', 'wheat': 'gluten', 'soy': 'soja',
-    'soybean': 'soja', 'eggs': 'jaja', 'egg': 'jaja',
+    // Stara baza
+    'mleko': 'mleko',
+    'serwatka': 'mleko',
+    'masło': 'mleko',
+    'orzeszki': 'orzeszki',
+    'arachidowe': 'orzeszki',
+    'gluten': 'gluten',
+    'pszenica': 'gluten',
+    'żyto': 'gluten',
+    'jęczmień': 'gluten',
+    'soja': 'soja',
+    'sojowa': 'soja',
+    'jaja': 'jaja',
+    'jajka': 'jaja',
+
+    // --- NOWE ALERGENY ---
+    'ryby': 'ryby',
+    'łosoś': 'ryby',
+    'dorsz': 'ryby',
+    'skorupiaki': 'skorupiaki',
+    'krewetki': 'skorupiaki',
+    'krab': 'skorupiaki',
+    'seler': 'seler',
+    'gorczyca': 'gorczyca',
+    'sezam': 'sezam',
+    'siarki': 'dwutlenek siarki', // Często na etykiecie jest "zawiera dwutlenek siarki"
+    'siarczyny': 'dwutlenek siarki',
+    'mięczaki': 'mięczaki',
+    'ostrygi': 'mięczaki',
   };
 
   List<Allergen> checkText(String scannedText) {
@@ -29,7 +52,10 @@ class AllergenChecker {
         String targetToSearch = entry.key;      
         String baseWordForAI = entry.value;     
 
-        int maxDistance = targetToSearch.length <= 4 ? 1 : 2;
+        // Ścisła realizacja reguły walidacyjnej z Etapu 2:
+        // Dla słów poniżej 5 znaków wymagamy absolutnej dokładności (dystans 0)
+        int maxDistance = targetToSearch.length < 5 ? 0 : 2;
+        // int maxDistance = 3;
         int distance = _calculateLevenshtein(word, targetToSearch);
 
         if (distance <= maxDistance) {
@@ -47,7 +73,8 @@ class AllergenChecker {
     return detectedAllergens;
   }
 
-  Allergen? checkSingleWord(String scannedWord) {
+  // Zmieniona sygnatura: przyjmuje teraz List<String> activeUserAllergens
+  Allergen? checkSingleWord(String scannedWord, List<String> activeUserAllergens) {
      String normalized = scannedWord.toLowerCase().replaceAll(RegExp(r'[^a-ząćęłńóśźż0-9\s]'), '');
      if (normalized.length < 3) return null;
 
@@ -55,11 +82,13 @@ class AllergenChecker {
         String targetToSearch = entry.key;
         String baseWordForAI = entry.value;
 
+        // FILTR: Jeśli bazowego słowa nie ma na liście użytkownika, przeskocz do kolejnego!
+        if (!activeUserAllergens.contains(baseWordForAI)) continue;
+
         int maxDistance = targetToSearch.length <= 4 ? 1 : 2;
         int distance = _calculateLevenshtein(normalized, targetToSearch);
         
         if (distance <= maxDistance) {
-          // PYTAMY AI O WAGĘ!
           AllergenSeverity aiSeverity = _classifier.classifyWord(baseWordForAI);
           
           if (aiSeverity != AllergenSeverity.unknown) {

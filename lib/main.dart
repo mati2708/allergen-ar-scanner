@@ -1,3 +1,4 @@
+import 'package:allergen_ar_scanner/screens/history_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'camera/camera_view.dart'; // Ten plik stworzymy za chwilę
@@ -30,9 +31,9 @@ class AllergenScannerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      showPerformanceOverlay: true,
+      showPerformanceOverlay: false,
       debugShowCheckedModeBanner: false, 
-      home: const CameraView(),
+      home: const HistoryScreen(),
     );
   }
 }
